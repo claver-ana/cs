@@ -1,0 +1,272 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+
+
+namespace pac7
+{
+    class Program
+    {
+        struct karts
+        {
+            public string nombre;
+            public double tiempo;
+            public int vueltas;
+        }
+
+
+        static void Main(string[] args)
+        {
+            // ANA CLAVER BARCELÓ
+
+
+            // Declaro array basada en la estructura karts
+            karts[] clase = new karts[100];
+
+
+            // Pido el nombre del fichero a tratar por teclado
+            Console.WriteLine("Escribe el nombre del archivo de texto a procesar:");
+            string txt = Console.ReadLine();
+
+
+            // Función para leer el fichero Karts.txt, controlar los errores del nombre y escribir los valores en el array (sitambién son correctos los tiempos que se comprueban con otra función)
+            // Devuelve el número de registros que se han guardado en el array. Necesitaremos este número para poder escribir las lineas en Categoria.txt
+            int contadorInd = leerFichero(clase, txt);
+
+
+            // llamo a la función para escribir el array en un archivo "Categoria.txt"
+            escribirFichero(clase, contadorInd);
+
+
+            Console.ReadLine();
+
+
+
+
+        }
+        
+        static int leerFichero(karts[] vector, string txt)
+        {
+            FileStream flujo = new FileStream(txt, FileMode.Open, FileAccess.Read);
+            StreamReader fichero = new StreamReader(flujo);
+            // Declaro variables que necesito para:
+            // - Guardar las líneas leidas en Karts.txt
+            string linea = "";
+            // - Contar las líneas leidas y poder escribir el número total al final de la función
+            int contadorLineas = 1;
+            // - Contar las líneas válidas y poder escribir el número total al final de la función
+            int contadorCorrectos = 0;
+            // - Contar las líneas con formato válido (y no repetidas) que se han guardado en el array
+            int contadorIndice = 0;
+            // - Contar las vueltas y almacenarlas en el campo "vector[i].vueltas"
+            int cantidadVuelta = 1;
+
+
+
+
+            // Leo el fichero hasta el final
+            while ((linea = fichero.ReadLine()) != null)
+            {
+                // Empiezo escribiendo la línea tal cual aparece en el fichero de entrada (Karts.txt)
+                Console.WriteLine("\n\n---> Línea {0}: {1}", contadorLineas, linea);
+                // A partir de esta línea, saco las variables que voy a ir comparando para ver si el formato es correcto
+                string nombreEnteroKART = linea.Substring(0, linea.IndexOf(' '));
+                string letrasKART = nombreEnteroKART.Substring(0, 4);
+                string numKART = nombreEnteroKART.Substring(4);
+                // Paso las comas a puntos para los decimales (doy por válidos los valores introducidos con coma y con punto)
+                string tiempoKartCompletoComas = linea.Substring(linea.IndexOf(' ')+1);
+                string tiempoKartCompleto = tiempoKartCompletoComas.Replace(",", ".");
+
+
+
+
+                //1.a comprobación: las 4 primeras letras son "KART"
+                if (letrasKART == "KART")
+                {
+                    // 2.a comprobación: es convertible a double (en el caso, por ejemplo, de que haya letras)
+                    int xnumKart;
+                    bool res = int.TryParse(numKART, out xnumKart);
+
+
+                    if (res == true)
+                    {
+                        //Si true --> 3.a comprobación: los caracteres a partir del cuarto y hasta el espacio deben estar en el rango 0:999
+
+
+                        if (xnumKart < 1000 && xnumKart > 0)
+                        {
+                            // --> Nombre correcto! Lo escribo por pantalla. 
+                            Console.Write("Nombre correcto ({0})", nombreEnteroKART);
+                            
+                            // Ahora llamo a la función verificacionTiempo
+                            bool esValido;
+                            esValido = verificacionTiempo(tiempoKartCompleto);
+                            if (esValido == true)
+                            {
+                                // Si el valor "esValido" es igual a TRUE, pasamos la linea al vector pero antes pasamos el string del tiempo a double
+                                double tiempoKartCompletoDouble = double.Parse(tiempoKartCompleto);
+                                // Contamos las líneas válidas para poder escribir el número total al final de la función
+                                contadorCorrectos++;
+                                // Aquí habrá que pasar la linea al vector. Antes compruebo que no exista ya en el vector, y que el tiempo sea menor.
+                                Console.Write("\nTiempo correcto ({0})", tiempoKartCompletoDouble);
+                                bool encontrado = false;
+                                int i = 0;
+                                // Reviso todos los registros para ver si está duplicado y si es menor que el que ya existe
+                                while (i < contadorIndice)
+                                {
+                                    if (nombreEnteroKART.CompareTo(vector[i].nombre) == 0)
+                                    {
+                                        encontrado = true;
+                                        vector[i].vueltas = vector[i].vueltas + 1;
+                                        if (vector[i].tiempo > tiempoKartCompletoDouble)
+                                        {
+                                            vector[i].tiempo = tiempoKartCompletoDouble;
+                                        }
+                                    }
+                                    i++;
+                                }
+                                if (encontrado == false)
+                                {
+                                    vector[contadorIndice].nombre = nombreEnteroKART;
+                                    vector[contadorIndice].tiempo = tiempoKartCompletoDouble;
+                                    vector[contadorIndice].vueltas = cantidadVuelta;
+                                    contadorIndice++;
+                                }
+                            }
+                            else
+                            { Console.Write("\nTiempo incorrecto ({0})", tiempoKartCompleto); }
+
+
+                        } 
+                            // Ha fallado el nombre del kart (numero del kart no correcto porque tiene más de 3 cifras), pero aun así también debemos verificar el tiempo 
+                        
+                        else
+                        {
+                            Console.Write("Nombre incorrecto ({0})", nombreEnteroKART);
+                            bool resultado;
+                            // Llamamos a función que verifica si el tiempo es correcto, a pesar de que el nombre sea incorrecto.
+                            resultado = verificacionTiempo(tiempoKartCompleto);
+                            if (resultado == true) { Console.Write("\nTiempo correcto ({0})", tiempoKartCompleto); }
+                            else { Console.Write("\nTiempo incorrecto ({0})", tiempoKartCompleto); }
+                        }
+                    } // Ha fallado el nombre del kart (numero del kart no convertible a int), pero aun así también debemos verificar el tiempo 
+                    else
+                    {
+                        Console.Write("Nombre incorrecto ({0})", nombreEnteroKART);
+
+
+                        bool resultado;
+                        // Llamamos a función que verifica si el tiempo es correcto
+                        resultado = verificacionTiempo(tiempoKartCompleto); 
+                        if (resultado == true) { Console.Write("\nTiempo correcto ({0})", tiempoKartCompleto); }
+                        else { Console.Write("\nTiempo incorrecto ({0})", tiempoKartCompleto); }
+
+
+                    }// Ha fallado el nombre del kart (no son las letras "KART"), pero aun así también debemos verificar el tiempo 
+                }
+                else
+                {
+                    Console.Write("Nombre incorrecto ({0})", nombreEnteroKART);
+
+
+                    bool resultado;
+                    // Llamamos a función que verifica si el tiempo es correcto, a pesar de que el nombre sea incorrecto.
+                    resultado = verificacionTiempo(tiempoKartCompleto);
+                    if (resultado == true) { Console.Write("\nTiempo correcto ({0})", tiempoKartCompleto); }
+                    else { Console.Write("\nTiempo incorrecto ({0})", tiempoKartCompleto); }
+
+
+                } // fin del procesamiento del nombre del kart y su tiempo
+
+
+                contadorLineas++;
+
+
+
+
+            }
+            Console.WriteLine("\n\nHemos procesado {0} líneas. De ellas, {1} son correctas.", contadorLineas - 1, contadorCorrectos);
+            // Devolvemos el numero total de índices del array. Lo necesitaremos en el loop de la ultima funcion, de escritura en el archivo. 
+            return contadorIndice;
+
+
+            fichero.Close();
+            flujo.Close();
+
+
+        } // Acaba función leerFichero
+
+
+
+
+        // Empieza funcion verificacionTiempo
+        static bool verificacionTiempo(string tiempo)
+        {
+            bool resultado = false;
+
+
+            // primero separamos la parte entera de la parte decimal, separados por un punto
+            string parteEnteraTiempo = tiempo.Substring(0, tiempo.IndexOf('.'));
+            string parteDecimalTiempo = tiempo.Substring(tiempo.IndexOf('.')+1);
+
+
+            // Comprobamos si la parte entera se puede pasar a INT
+            int parteEnteraTiempoInt;
+            resultado = int.TryParse(parteEnteraTiempo, out parteEnteraTiempoInt);
+
+
+            if (resultado == true)
+            { //hacemos comprobación que tenga de 1 a 3 digitos
+                if (parteEnteraTiempoInt >= 0 && parteEnteraTiempoInt < 1000)
+                { // Comprobamos si la parte decimal se puede pasar a INT
+                    int parteDecimalTiempoInt;
+                    resultado = int.TryParse(parteDecimalTiempo, out parteDecimalTiempoInt);
+                    if (resultado == true)
+                    {//hacemos comprobación que tenga de 1 a 2 digitos
+                        if (parteDecimalTiempoInt > 0 && parteDecimalTiempoInt < 100)
+                        {
+                            resultado = true;
+                        }
+                        else { resultado = false; }
+                    }
+                    else { resultado = false; }
+                }
+                else { resultado = false; }
+            }
+            else { resultado = false; }
+
+
+
+
+            return resultado;
+        }
+        // Acaba función verificacionTiempo
+
+
+
+
+
+
+        // Inicio de la función escribir fichero Clasificacion.txt
+        static void escribirFichero(karts[] vector, int contadorIndice)
+        {
+            FileStream flujo = new FileStream("Clasificacion.txt", FileMode.Create, FileAccess.Write);
+            StreamWriter fichero = new StreamWriter(flujo);
+            
+            //Recorremos el array y escribimos todos las líneas en el documento de texto;
+            for (int i = 0; i < contadorIndice; i++)
+            {
+                fichero.WriteLine("\n\n**** {0} --> {1} vuelta(s) --> Mejor tiempo: {2}", vector[i].nombre, vector[i].vueltas, vector[i].tiempo);
+            }
+
+
+            fichero.Close();
+            flujo.Close();
+
+
+        } //final de la función escribirFichero
+    }
+}

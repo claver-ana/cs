@@ -1,0 +1,220 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+
+namespace PAC6_UF2
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // ANA CLAVER BARCELÓ
+
+
+            // La mecánica del juego consiste en comparar dos matrices char, una populada con caracteres repetidos, y otra con el caracter '?' en todas las casillas.
+            // El usuario dará dos posiciones que resultarán en dos caracteres a comparar dentro de la matriz con los caracteres repetidos. Si coinciden trasladaremos esos caracteres a la matriz de los interrogantes. 
+            // El juego continuará hasta que la matriz de interrogantes sea una copia de la matriz de los caracteres repetidos.
+            
+            // Para empezar, pido al usuario el grado de dificultad: fácil 2x2, intermedio 4x4, o dificil 6x6.
+            int fila1, columna1, fila2, columna2;
+            int N=0;
+            do{
+            Console.WriteLine("EL JUEGO DE LAS PAREJAS\nElige el nivel de dificultad según el número de columnas y filas de la tabla:");
+            Console.WriteLine("Opción 1. Nivel fácil (2x2)");
+            Console.WriteLine("Opción 2. Nivel intermedio (4x4)");
+            Console.WriteLine("Opción 3. Nivel difícil (6x6)");
+            Console.WriteLine("Opción 4. Salir del juego");
+            Console.WriteLine("\n¿Qué opción eliges?");
+            N = int.Parse(Console.ReadLine());
+
+
+            if (N == 1 || N == 2 || N == 3) { 
+           
+            // Llamo a la función para transformar la opción (1, 2 ó 3) a nivel de dificultad (2, 4 ó 6)
+            opcionANivel(ref N);
+            int cont = 0;
+            int M = N * N;
+         
+            // Llamo a la función que nos devolverá un vector populado con el número de letras según el tamaño elegido por el usuario
+            char[] miVector;
+            miVector = nivelDificultad(N); //llamada a la función
+
+
+            // Llamo a la función a la que  pasamos como parámetros un vector y el número de indices del mismo, y que nos devuelve el mismo vector desordenado
+            miVector = barajarNumeros(miVector, M); //llamada a la función
+
+
+            // Esta matriz contiene las soluciones
+            char[,] miMatriz = new char[N, N];
+            for (int i = 0; i < M; i++)
+            {
+                int j = i / N;
+                int k = i % N;
+                miMatriz[j, k] = miVector[i];
+            }
+
+
+            //esto es la solución no debe mostrarse
+            Console.WriteLine("\nEsta es la solución - no debe mostrarse\n");
+            for (int j = 0; j < N; j++)
+            {
+                for (int k = 0; k < N; k++)
+                {
+                    Console.Write("{0,6}", (miMatriz[j, k])); 
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine("\n¡Empezamos el juego!\n");
+
+
+            // Muestro otra matriz con los interrogantes
+            char[,] matrizInterrogantes = new char[N, N];
+            for (int j = 0; j < N; j++)
+            {
+                for (int k = 0; k < N; k++)
+                {
+                    Console.Write("{0,6}", (matrizInterrogantes[j, k] = '?'));
+                }
+                Console.WriteLine();
+            }
+            // EMPIEZA EL JUEGO: hasta que las dos matrices sean idénticas, sigo pidiendo al usuario que introduzca posiciones para destapar los interrogantes
+            for (int i = 0; i < M; i++)
+            {
+                int j = i / N;
+                int k = i % N;
+                while (miMatriz[j, k] != matrizInterrogantes[j, k])
+                {
+
+
+             // Pedimos la posición del primer número, controlando duplicados y límites
+                  do  {
+                        Console.WriteLine("\nEscribe la posición del PRIMER '?' a destapar, separada por comas ('fila,columna')");
+                        string input1 = (Console.ReadLine());
+                        // Llamo a las funciones para encontrar saber los índices a partir del input del usuario
+                        fila1 = InputFila(input1, N);
+                        columna1 = InputColumna(input1, N);
+                        if (columna1 < 0 || columna1 > N - 1 || fila1 < 0 || fila1 > N - 1 || matrizInterrogantes[fila1, columna1] != '?')
+                        {
+                            Console.WriteLine("La posición está fuera de los límites permitidos o ya está descubierta. Vuelve a probar suerte.");
+                        }
+                  } while (columna1 < 0 || columna1 > N - 1 || fila1 < 0 || fila1 > N - 1 || matrizInterrogantes[fila1, columna1] != '?');
+                 
+
+
+                  // Pedimos la posición del segundo número, controlando duplicados y límites
+                  do {
+                      Console.WriteLine("Escribe la posición del SEGUNDO '?' a destapar, separada por comas ('fila,columna')");
+                        string input2 = (Console.ReadLine());
+                        // Llamo a las funciones para encontrar saber los índices a partir del input del usuario
+                        fila2 = InputFila(input2, N);
+                        columna2 = InputColumna(input2, N);
+                        if (columna2 < 0 || columna2 > N - 1 || fila2 < 0 || fila2 > N - 1 || matrizInterrogantes[fila2, columna2] != '?' || (fila1 == fila2 && columna1 == columna2))
+                        {
+                            Console.WriteLine("La posición está fuera de los límites permitidos o ya está descubierta. Vuelve a probar suerte.");
+                        }
+                  } while (columna2 < 0 || columna2 > N - 1 || fila2 < 0 || fila2 > N - 1 || matrizInterrogantes[fila2, columna2] != '?' || (fila1 == fila2 && columna1 == columna2));
+       
+            
+            // Muestro la matriz de interrogantes, pero con las dos posiciones de la otra matriz (miMatriz)
+           for (int l = 0; l < N; l++)
+            {
+                for (int m = 0; m < N; m++)
+                {
+                    if (l == fila1 && m == columna1 || l == fila2 && m == columna2)
+                    { Console.Write("{0,6}", miMatriz[l, m]); }
+
+
+                    else {Console.Write("{0,6}", (matrizInterrogantes[l, m]));}
+                }
+                Console.WriteLine();
+            }
+
+
+            // Si los dos valores coinciden, los paso a la matrizInterrogantes
+            if (miMatriz[fila1, columna1] == miMatriz[fila2, columna2])
+            {
+                matrizInterrogantes[fila1, columna1] = (miMatriz[fila1, columna1]);
+                matrizInterrogantes[fila2, columna2] = (miMatriz[fila2, columna2]);
+                Console.WriteLine("¡Pareja descubierta!");
+            }
+            else
+            {
+                Console.WriteLine("\nNo son pareja. Seguimos jugando.\n");
+                for (int z = 0; z < N; z++)
+                {
+                    for (int y = 0; y < N; y++)
+                    {
+                        Console.Write("{0,6}", (matrizInterrogantes[z, y]));
+                    }
+                    Console.WriteLine();
+                }
+            }
+           // Contabilizo la tirada para poder mostrar las estadísticas al final del juego.
+            cont++;
+                } 
+             
+        } // SE ACABA EL JUEGO (si las dos matrices contienen los mismos valores) y muestro las estadísticas
+            Console.WriteLine("\n==============================================================\nEnhorabuena, prueba superada. Lo has conseguido en " + cont + " intentos.\n==============================================================\n");
+            }
+            } while (N != 4);
+         }
+       
+        // Declaración de función (pasar la opción a nivel de dificultad)
+        static void opcionANivel(ref int N)
+        {
+            N = N * 2;
+        }
+
+
+        // Declaración de función (conseguir matriz según el nivel de dificultad)
+        static char[] nivelDificultad(int nivel){
+        char[] miVector;
+            if (nivel == 2)
+        {
+            miVector = new char[] {'A', 'B', 'A', 'B'}; 
+        }
+        else if (nivel == 4)
+        {
+                miVector = new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+        }
+        else
+        {
+            miVector = new char[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'}; 
+        }
+        return miVector;
+        }
+
+
+        // Declaración de función
+        static char[] barajarNumeros(char[] miVector, int M)
+            {
+                Random r = new Random();
+                for (int i = 0; i < M; i++)
+                {
+                    int indiceGenerado = r.Next(M);
+                    char aux = miVector[M - 1];
+                    miVector[M - 1] = miVector[indiceGenerado];
+                    miVector[indiceGenerado] = aux;
+                }
+                return miVector;
+            }
+        
+        // Declaración de función
+        static int InputFila (string input, int N) 
+        {
+            int indice = int.Parse(input.Substring(0, 1));
+            return indice;
+        }
+
+
+        // Declaración de función
+        static int InputColumna (string input, int N)
+        {
+            int indice = int.Parse(input.Substring(2, 1));
+            return indice;
+        }
+      }
+    }
